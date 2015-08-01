@@ -1,17 +1,19 @@
 package com.yongzhixin.serversocket;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
-public class ChatSocket implements Runnable {
+public class ChatSocket extends Thread {
 	private Socket socket;
 
 	public ChatSocket(Socket socket) {
 		this.socket = socket;
 	}
 
-	private void out(String out) {
+	public void out(String out) {
 		try {
 			socket.getOutputStream().write(out.getBytes("UTF-8"));
 		} catch (UnsupportedEncodingException e) {
@@ -23,15 +25,16 @@ public class ChatSocket implements Runnable {
 
 	@Override
 	public void run() {
-		int count = 0;
-		while (true) {
-			count++;
-			out("loop:" + count);
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(
+					socket.getInputStream(), "UTF-8"));
+			String line=null;
+			while((line=br.readLine())!=null){
+				ChatManager.getChatManager().publish(this, line);
 			}
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }
